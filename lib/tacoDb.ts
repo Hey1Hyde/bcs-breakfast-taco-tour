@@ -1,4 +1,4 @@
-import { normalizeReview, Review } from '@/lib/tacoData';
+import { normalizeReview, overallScore, Review } from '@/lib/tacoData';
 import { supabase } from '@/lib/supabase';
 
 type ReviewRow = {
@@ -68,6 +68,8 @@ export async function saveReviewToDatabase(review: Review): Promise<Review> {
 
   if (restaurantError) throw restaurantError;
 
+  const legacyScore = overallScore(review);
+
   const { data: reviewRow, error: reviewError } = await supabase
     .from('reviews')
     .insert({
@@ -76,10 +78,10 @@ export async function saveReviewToDatabase(review: Review): Promise<Review> {
       review_date: review.date,
       ordered: review.ordered,
       price: review.price,
-      taste: review.taste,
-      service: review.service,
-      atmosphere: review.atmosphere,
-      value: review.value,
+      taste: legacyScore,
+      service: legacyScore,
+      atmosphere: legacyScore,
+      value: legacyScore,
       tortilla: review.tortilla,
       salsa: review.salsa,
       filling: review.filling,
@@ -109,5 +111,5 @@ export async function saveReviewToDatabase(review: Review): Promise<Review> {
     if (awardLinkError) throw awardLinkError;
   }
 
-  return normalizeReview({ ...review, id: reviewRow.id, restaurantName });
+  return normalizeReview({ ...review, id: reviewRow.id, restaurantName, taste: legacyScore, service: legacyScore, atmosphere: legacyScore, value: legacyScore });
 }

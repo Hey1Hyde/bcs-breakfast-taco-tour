@@ -5,8 +5,8 @@ A mobile-first Progressive Web App for a small private group rating breakfast ta
 ## Features
 
 - Score restaurants with reviewer name, date, order, price, review, quote, ratings, and awards.
-- Weighted overall score: Taste 50%, Customer Service 20%, Atmosphere 15%, Value 15%.
-- Taco breakdown ratings for tortilla, salsa, filling quality, and taco balance.
+- Overall score is the simple average of Tortilla, Salsa, Filling Quality, and Taco Balance.
+- Taco ratings use a 1.0–10.0 scale with 0.1 increments.
 - Leaderboard averages only submitted reviews for each restaurant.
 - Restaurant profiles with averages, reviews, and awards.
 - Awards board and JSON export backup.
@@ -38,7 +38,7 @@ The schema creates:
 - `awards`
 - `review_awards` for the many-to-many relationship between reviews and awards
 
-The app stores restaurant, reviewer, date, order, price, Taste, Customer Service, Atmosphere, Value, Tortilla, Salsa, Filling Quality, Taco Balance, review text, quote, and selected awards. Every rating is stored on the current 1.0–10.0 scale with 0.1 increments.
+The app stores restaurant, reviewer, date, order, price, Tortilla, Salsa, Filling Quality, Taco Balance, review text, quote, and selected awards. Every rating is stored on the current 1.0–10.0 scale with 0.1 increments. Existing legacy rating columns remain in the database for compatibility, but the app calculates overall scores only from Tortilla, Salsa, Filling Quality, and Taco Balance.
 
 ### 3. Optional starter data
 
