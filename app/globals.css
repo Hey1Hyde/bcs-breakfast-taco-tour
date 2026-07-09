@@ -73,3 +73,87 @@ input, textarea, select { font-size: 16px; }
     transform: none;
   }
 }
+
+@keyframes tacoFloatAway {
+  0% { opacity: 0; transform: translate(-50%, 8px) scale(.7) rotate(-8deg); }
+  12% { opacity: 1; }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--taco-drift, 0px)), -96px) scale(1.15) rotate(18deg); }
+}
+
+@keyframes leaderboardRowIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes awardShimmer {
+  0% { background-position: -180% 0; }
+  100% { background-position: 180% 0; }
+}
+
+.taco-celebration {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+.taco-confetti {
+  --taco-drift: 0px;
+  animation: tacoFloatAway 1500ms ease-out forwards;
+  font-size: 1.25rem;
+  left: var(--taco-left, 50%);
+  position: absolute;
+  top: 55%;
+  will-change: transform, opacity;
+}
+
+.taco-confetti:nth-child(2n) { --taco-drift: 18px; animation-delay: 70ms; }
+.taco-confetti:nth-child(3n) { --taco-drift: -16px; animation-delay: 140ms; }
+.taco-confetti:nth-child(4n) { --taco-drift: 10px; animation-delay: 210ms; }
+.taco-confetti:nth-child(5n) { --taco-drift: -8px; animation-delay: 280ms; }
+
+.score-meter {
+  background: rgb(63 42 29 / 12%);
+  border-radius: 9999px;
+  height: .55rem;
+  margin-top: .45rem;
+  overflow: hidden;
+}
+
+.score-meter > span {
+  background: linear-gradient(90deg, #E76F51, #F4A261, #E9C46A);
+  border-radius: inherit;
+  display: block;
+  height: 100%;
+  min-width: .35rem;
+}
+
+.score-meter--compact {
+  height: .35rem;
+  margin-top: .2rem;
+}
+
+.score-meter--light {
+  background: rgb(255 255 255 / 30%);
+  margin-bottom: .75rem;
+}
+
+.score-meter--light > span {
+  background: linear-gradient(90deg, #FFF7E8, #E9C46A);
+}
+
+.tab-panel .stagger-card {
+  animation-name: leaderboardRowIn;
+  animation-duration: 320ms;
+}
+
+.award-badge {
+  background-image: linear-gradient(110deg, transparent 0%, rgb(255 255 255 / 0) 35%, rgb(255 255 255 / 55%) 50%, rgb(255 255 255 / 0) 65%, transparent 100%);
+  background-size: 220% 100%;
+  animation: awardShimmer 4.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .taco-celebration { display: none; }
+  .award-badge { animation: none !important; }
+}
