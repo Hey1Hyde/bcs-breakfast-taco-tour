@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 /* eslint-disable @next/next/no-img-element */
-import { awardOptions, blankRatings, breakdownCategories, fmt, groupByRestaurant, officialCategories, overallScore, Review, seedReviews } from '@/lib/tacoData';
+import { awardOptions, blankRatings, breakdownCategories, fmt, groupByRestaurant, officialCategories, overallScore, Review, seedReviews, stripRetiredRatings } from '@/lib/tacoData';
 
 type Tab = 'score'|'leaderboard'|'restaurants'|'awards'|'gallery'|'settings';
 const tabs: {id: Tab; label: string; icon: string}[] = [
@@ -13,7 +13,7 @@ export default function Home() {
   const [reviews, setReviews] = useState<Review[]>(() => {
     if (typeof window === 'undefined') return seedReviews;
     const raw = window.localStorage.getItem(STORE);
-    return raw ? JSON.parse(raw) : seedReviews;
+    return raw ? JSON.parse(raw).map(stripRetiredRatings) : seedReviews;
   });
   const [tab, setTab] = useState<Tab>('score');
   const [activeRestaurant, setActiveRestaurant] = useState('Jesse’s Taqueria');
@@ -27,13 +27,13 @@ export default function Home() {
   function update<K extends keyof Review>(key: K, value: Review[K]) { setForm(f => ({...f, [key]: value})); }
   function saveReview() {
     if (!form.restaurantName.trim() || !form.reviewerName.trim()) return alert('Add a restaurant and reviewer name first.');
-    setReviews([{...form, id: crypto.randomUUID(), restaurantName: form.restaurantName.trim()}, ...reviews]);
+    setReviews([stripRetiredRatings({...form, id: crypto.randomUUID(), restaurantName: form.restaurantName.trim()}), ...reviews.map(stripRetiredRatings)]);
     setActiveRestaurant(form.restaurantName.trim()); setTab('leaderboard');
     setForm({ id:'', restaurantName: form.restaurantName, reviewerName: '', date:new Date().toISOString().slice(0,10), ordered:'', price:'', photo:'', sentenceReview:'', memorableQuote:'', awards:[], ...blankRatings });
   }
   async function photo(file?: File) { if (!file) return; const reader = new FileReader(); reader.onload = () => update('photo', String(reader.result)); reader.readAsDataURL(file); }
-  function importJson(file?: File) { if (!file) return; const reader = new FileReader(); reader.onload = () => { try { setReviews(JSON.parse(String(reader.result))); alert('Backup imported!'); } catch { alert('That JSON did not import.'); } }; reader.readAsText(file); }
-  const exportHref = `data:application/json;charset=utf-8,${encodeURIComponent(JSON.stringify(reviews, null, 2))}`;
+  function importJson(file?: File) { if (!file) return; const reader = new FileReader(); reader.onload = () => { try { setReviews(JSON.parse(String(reader.result)).map(stripRetiredRatings)); alert('Backup imported!'); } catch { alert('That JSON did not import.'); } }; reader.readAsText(file); }
+  const exportHref = `data:application/json;charset=utf-8,${encodeURIComponent(JSON.stringify(reviews.map(stripRetiredRatings), null, 2))}`;
 
   return <main className="min-h-screen bg-[radial-gradient(circle_at_top,#F8DDA4_0,#FFF7E8_36%,#FFF7E8_100%)] pb-28">
     <header className="sticky top-0 z-20 border-b border-orange/10 bg-cream/90 px-4 py-3 backdrop-blur"><div className="mx-auto max-w-md"><p className="text-xs font-bold uppercase tracking-[.25em] text-orange">Bryan / College Station</p><h1 className="text-2xl font-black text-bean">🌮 2026 Breakfast Taco Tour</h1><p className="text-sm text-bean/70">Yelp vibes, fantasy rankings, local taco glory.</p></div></header>
@@ -41,7 +41,7 @@ export default function Home() {
       {tab==='score' && <Card title="Score a restaurant" emoji="✍️"><div className="space-y-3">
         <Input label="Restaurant name" value={form.restaurantName} onChange={v=>update('restaurantName',v)} list="restaurants"/><datalist id="restaurants">{restaurants.map(r=><option key={r.name}>{r.name}</option>)}</datalist>
         <Input label="Reviewer name" value={form.reviewerName} onChange={v=>update('reviewerName',v)} placeholder="Your name"/><Input label="Date" type="date" value={form.date} onChange={v=>update('date',v)}/>
-        <Input label="What I ordered" value={form.ordered} onChange={v=>update('ordered',v)} placeholder="Bacon, egg & cheese + salsa verde"/><Input label="Price" value={form.price} onChange={v=>update('price',v)} placeholder="$4.99"/>
+        <Input label="What I ordered" value={form.ordered} onChange={v=>update('ordered',v)} placeholder="Bacon taco + salsa verde"/><Input label="Price" value={form.price} onChange={v=>update('price',v)} placeholder="$4.99"/>
         <button className="w-full rounded-2xl bg-tortilla p-4 font-black" onClick={()=>fileRef.current?.click()}>📸 Add taco photo</button><input ref={fileRef} className="hidden" type="file" accept="image/*" onChange={e=>photo(e.target.files?.[0])}/>{form.photo && <img src={form.photo} alt="Preview" className="h-44 w-full rounded-3xl object-cover"/>}
         <Text label="One-sentence review" value={form.sentenceReview} onChange={v=>update('sentenceReview',v)}/><Input label="Memorable quote" value={form.memorableQuote} onChange={v=>update('memorableQuote',v)} placeholder="That salsa woke me up."/>
         <h3 className="font-black">Official ratings <span className="text-sm text-bean/60">Overall: {fmt(overallScore(form))}</span></h3>{officialCategories.map(c=><Slider key={c.key} label={`${c.emoji} ${c.label} (${Math.round(c.weight*100)}%)`} value={form[c.key]} onChange={v=>update(c.key,v)}/>) }
