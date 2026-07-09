@@ -20,7 +20,6 @@ export type Review = {
   sentenceReview: string; memorableQuote: string; awards: string[];
 } & Record<RatingKey, number>;
 export const blankRatings = { taste: 8, service: 8, atmosphere: 8, value: 8, tortilla: 8, salsa: 8, filling: 8, balance: 8 } as Record<RatingKey, number>;
-export const seedReviews: Review[] = [{ id:'seed-jesses', restaurantName:'Jesse’s Taqueria', reviewerName:'Tour Crew', date:'2026-01-01', ordered:'Breakfast tacos', price:'', sentenceReview:'Ready for the first official stop on the B/CS Breakfast Taco Tour.', memorableQuote:'Let the tortilla rankings begin.', awards:['Hidden Gem'], ...blankRatings }];
 export function overallScore(r: Pick<Review, OfficialKey>) { return r.taste*.5 + r.service*.2 + r.atmosphere*.15 + r.value*.15; }
 export function fmt(n: number) { return Number.isFinite(n) ? n.toFixed(2) : '—'; }
 export function normalizeRating(value: unknown) {

@@ -2,51 +2,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { loadReviews, saveReviewToDatabase } from '@/lib/tacoDb';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
-import { awardOptions, blankRatings, breakdownCategories, fmt, groupByRestaurant, normalizeReview, officialCategories, overallScore, Review, seedReviews } from '@/lib/tacoData';
+import { awardOptions, blankRatings, breakdownCategories, fmt, groupByRestaurant, normalizeReview, officialCategories, overallScore, Review } from '@/lib/tacoData';
 
 type Tab = 'score'|'leaderboard'|'restaurants'|'awards'|'settings';
 const tabs: {id: Tab; label: string; icon: string}[] = [
   {id:'score',label:'Score',icon:'✍️'},{id:'leaderboard',label:'Leaderboard',icon:'🏆'},{id:'restaurants',label:'Restaurants',icon:'📍'},{id:'awards',label:'Awards',icon:'🏅'},{id:'settings',label:'Backup',icon:'⚙️'}
 ];
 
-const localMigrationCompleteKey = 'bcs-breakfast-taco-tour:supabase-migration-complete';
-
-function localStorageReviewCandidates() {
-  const candidates: Review[] = [];
-  for (let index = 0; index < localStorage.length; index += 1) {
-    const key = localStorage.key(index);
-    if (!key || key === localMigrationCompleteKey) continue;
-    const raw = localStorage.getItem(key);
-    if (!raw) continue;
-    try {
-      const parsed = JSON.parse(raw) as unknown;
-      const values = Array.isArray(parsed) ? parsed : typeof parsed === 'object' && parsed !== null && Array.isArray((parsed as { reviews?: unknown }).reviews) ? (parsed as { reviews: unknown[] }).reviews : [];
-      values.forEach(value => {
-        if (typeof value !== 'object' || value === null) return;
-        const record = value as Record<string, unknown>;
-        if (typeof record.restaurantName !== 'string' || typeof record.reviewerName !== 'string') return;
-        candidates.push(normalizeReview(record));
-      });
-    } catch {
-      // Ignore non-JSON localStorage entries owned by other browser features.
-    }
-  }
-  return candidates;
-}
-
-async function migrateLocalReviews() {
-  if (localStorage.getItem(localMigrationCompleteKey)) return [];
-  const candidates = localStorageReviewCandidates();
-  if (candidates.length === 0) {
-    localStorage.setItem(localMigrationCompleteKey, 'true');
-    return [];
-  }
-  const migrated = await Promise.all(candidates.map(review => saveReviewToDatabase(review)));
-  localStorage.setItem(localMigrationCompleteKey, 'true');
-  return migrated;
-}
 export default function Home() {
-  const [reviews, setReviews] = useState<Review[]>(seedReviews);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [saveComplete, setSaveComplete] = useState(false);
   const [celebration, setCelebration] = useState<number[]>([]);
@@ -58,8 +22,7 @@ export default function Home() {
     if (!isSupabaseConfigured) return;
     try {
       const loadedReviews = await loadReviews();
-      const activeReviews = loadedReviews.length > 0 ? loadedReviews : await migrateLocalReviews();
-      setReviews(activeReviews.length > 0 ? activeReviews : seedReviews);
+      setReviews(loadedReviews);
     } catch (error) {
       console.error(error);
       alert('Could not load shared taco tour data. Check the Supabase environment variables and table setup.');
