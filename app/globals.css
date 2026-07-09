@@ -1,0 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+:root { color-scheme: light; }
+body { background: #FFF7E8; color: #3F2A1D; }
+* { -webkit-tap-highlight-color: transparent; }
+input, textarea, select { font-size: 16px; }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
