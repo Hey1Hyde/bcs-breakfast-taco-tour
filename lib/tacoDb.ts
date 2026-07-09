@@ -1,4 +1,4 @@
-import { Review, stripRetiredRatings } from '@/lib/tacoData';
+import { normalizeReview, Review } from '@/lib/tacoData';
 import { supabase } from '@/lib/supabase';
 
 type ReviewRow = {
@@ -23,14 +23,13 @@ type ReviewRow = {
 };
 
 function rowToReview(row: ReviewRow): Review {
-  return stripRetiredRatings({
+  return normalizeReview({
     id: row.id,
     restaurantName: row.restaurant?.name || 'Unnamed Restaurant',
     reviewerName: row.reviewer_name,
     date: row.review_date,
     ordered: row.ordered || '',
     price: row.price || '',
-    photo: '',
     taste: Number(row.taste),
     service: Number(row.service),
     atmosphere: Number(row.atmosphere),
@@ -110,5 +109,5 @@ export async function saveReviewToDatabase(review: Review): Promise<Review> {
     if (awardLinkError) throw awardLinkError;
   }
 
-  return { ...stripRetiredRatings(review), id: reviewRow.id, restaurantName };
+  return normalizeReview({ ...review, id: reviewRow.id, restaurantName });
 }

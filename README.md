@@ -9,11 +9,10 @@ A mobile-first Progressive Web App for a small private group rating breakfast ta
 - Taco breakdown ratings for tortilla, salsa, filling quality, and taco balance.
 - Leaderboard averages only submitted reviews for each restaurant.
 - Restaurant profiles with averages, reviews, and awards.
-- Awards board, gallery, and JSON export backup.
+- Awards board and JSON export backup.
 - Shared Supabase database so everyone using the same deployed URL sees the same restaurants, reviews, leaderboard, awards, and scores.
 - Installable PWA with manifest and app icon.
 
-> Photo uploads are intentionally disabled for Version 2 so saving scores to the shared database stays reliable. Photos are not part of the current schema.
 
 ## Supabase setup
 
@@ -39,7 +38,7 @@ The schema creates:
 - `awards`
 - `review_awards` for the many-to-many relationship between reviews and awards
 
-The app stores restaurant, reviewer, date, order, price, Taste, Customer Service, Atmosphere, Value, Tortilla, Salsa, Filling Quality, Taco Balance, review text, quote, and selected awards.
+The app stores restaurant, reviewer, date, order, price, Taste, Customer Service, Atmosphere, Value, Tortilla, Salsa, Filling Quality, Taco Balance, review text, quote, and selected awards. Every rating is stored on the current 1.0–10.0 scale with 0.1 increments.
 
 ### 3. Optional starter data
 
@@ -59,7 +58,7 @@ with restaurant as (
     sentence_review, memorable_quote
   )
   select id, 'Tour Crew', '2026-01-01', 'Breakfast tacos', '',
-    4, 4, 4, 4, 4, 4, 4, 4,
+    8, 8, 8, 8, 8, 8, 8, 8,
     'Ready for the first official stop on the B/CS Breakfast Taco Tour.',
     'Let the tortilla rankings begin.'
   from restaurant
