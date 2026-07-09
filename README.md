@@ -6,7 +6,7 @@ A mobile-first Progressive Web App for a small private group rating breakfast ta
 
 - Score restaurants with reviewer name, date, order, price, photo, review, quote, ratings, and awards.
 - Weighted overall score: Taste 50%, Customer Service 20%, Atmosphere 15%, Value 15%.
-- Taco breakdown ratings for tortilla, salsa, filling quality, egg, cheese, and balance.
+- Taco breakdown ratings for tortilla, salsa, filling quality, and taco balance.
 - Leaderboard averages only submitted reviews for each restaurant.
 - Restaurant profiles with averages, photos, reviews, and awards.
 - Awards board, gallery, and JSON export/import backup.
