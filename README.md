@@ -4,27 +4,111 @@ A mobile-first Progressive Web App for a small private group rating breakfast ta
 
 ## Features
 
-- Score restaurants with reviewer name, date, order, price, photo, review, quote, ratings, and awards.
+- Score restaurants with reviewer name, date, order, price, review, quote, ratings, and awards.
 - Weighted overall score: Taste 50%, Customer Service 20%, Atmosphere 15%, Value 15%.
 - Taco breakdown ratings for tortilla, salsa, filling quality, and taco balance.
 - Leaderboard averages only submitted reviews for each restaurant.
-- Restaurant profiles with averages, photos, reviews, and awards.
-- Awards board, gallery, and JSON export/import backup.
-- Works immediately with localStorage; no accounts or cloud setup required.
+- Restaurant profiles with averages, reviews, and awards.
+- Awards board, gallery, and JSON export backup.
+- Shared Supabase database so everyone using the same deployed URL sees the same restaurants, reviews, leaderboard, awards, and scores.
 - Installable PWA with manifest and app icon.
 
-## Run locally
+> Photo uploads are intentionally disabled for Version 2 so saving scores to the shared database stays reliable. Photos are not part of the current schema.
+
+## Supabase setup
+
+### 1. Create the Supabase project
+
+1. Go to https://supabase.com/dashboard/projects and select **New project**.
+2. Choose an organization, enter a project name, set a database password, and select the closest region.
+3. Wait for the project to finish provisioning.
+4. In **Project Settings → API**, copy:
+   - **Project URL**
+   - **anon public** key
+
+### 2. Create the tables
+
+1. In the Supabase dashboard, open **SQL Editor**.
+2. Paste the complete contents of `supabase/schema.sql`.
+3. Click **Run**.
+
+The schema creates:
+
+- `restaurants`
+- `reviews`
+- `awards`
+- `review_awards` for the many-to-many relationship between reviews and awards
+
+The app stores restaurant, reviewer, date, order, price, Taste, Customer Service, Atmosphere, Value, Tortilla, Salsa, Filling Quality, Taco Balance, review text, quote, and selected awards.
+
+### 3. Optional starter data
+
+To pre-load the original starter restaurant, run this in Supabase SQL Editor after creating the schema:
+
+```sql
+insert into public.restaurants (name)
+values ('Jesse’s Taqueria')
+on conflict (name) do nothing;
+
+with restaurant as (
+  select id from public.restaurants where name = 'Jesse’s Taqueria'
+), review as (
+  insert into public.reviews (
+    restaurant_id, reviewer_name, review_date, ordered, price,
+    taste, service, atmosphere, value, tortilla, salsa, filling, balance,
+    sentence_review, memorable_quote
+  )
+  select id, 'Tour Crew', '2026-01-01', 'Breakfast tacos', '',
+    4, 4, 4, 4, 4, 4, 4, 4,
+    'Ready for the first official stop on the B/CS Breakfast Taco Tour.',
+    'Let the tortilla rankings begin.'
+  from restaurant
+  returning id
+), award as (
+  insert into public.awards (name)
+  values ('Hidden Gem')
+  on conflict (name) do update set name = excluded.name
+  returning id
+)
+insert into public.review_awards (review_id, award_id)
+select review.id, award.id from review, award
+on conflict do nothing;
+```
+
+### 4. Enable realtime updates
+
+In Supabase, open **Database → Replication** and enable realtime for these tables:
+
+- `restaurants`
+- `reviews`
+- `review_awards`
+
+The app also refreshes immediately after saving, but realtime lets other open browsers update without a manual reload.
+
+## Environment variables
+
+Create `.env.local` for local development:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=your-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-public-key
+```
+
+Only use the anon public key in the browser. Do not add the Supabase service role key to this app.
+
+## Local testing
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open `http://localhost:3000` on your phone or computer. For iPhone testing, use the same Wi-Fi network and open the local network URL shown by Next.js.
+Open `http://localhost:3000`, save a score, and confirm it appears in Supabase Table Editor and in another browser window using the same local app.
 
 ## Build
 
 ```bash
+npm run lint
 npm run build
 npm start
 ```
@@ -34,22 +118,13 @@ npm start
 1. Push this repo to GitHub.
 2. Import it at https://vercel.com/new.
 3. Keep the default Next.js settings.
-4. Deploy.
-
-## Deploy to Netlify
-
-1. Push this repo to GitHub.
-2. Import it in Netlify.
-3. Build command: `npm run build`
-4. Publish directory: `.next`
-5. Use Netlify's Next.js runtime/plugin if prompted.
+4. In the Vercel project, open **Settings → Environment Variables**.
+5. Add:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+6. Redeploy the project after adding the variables.
+7. Open the Vercel URL on two devices and confirm both see the same saved taco scores.
 
 ## Data notes
 
-The app currently stores reviews in browser localStorage under `bcs-breakfast-taco-tour-v1`. Use **Settings/Backup → Export JSON** after each taco stop, then import that JSON on another device if needed.
-
-The data logic is isolated in `lib/tacoData.ts` so Firebase or Supabase syncing can be added later without changing the UI heavily.
-
-## Starter restaurant
-
-The starter data includes Jesse’s Taqueria in Bryan.
+The shared data logic lives in `lib/tacoDb.ts`, the browser client setup lives in `lib/supabase.ts`, and the scoring/grouping logic remains isolated in `lib/tacoData.ts`.
